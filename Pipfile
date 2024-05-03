@@ -1,0 +1,24 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+sqlalchemy = "==2.0.29"
+requests = "==2.31.0"
+pandas = "==2.2.2"
+fastapi = "==0.110.1"
+uvicorn = {extras = ["standard"], version = "==0.29.0"}
+
+[dev-packages]
+pytest = "==8.1.1"
+pytest-asyncio = "==0.23.6"
+pytest-mock = "==3.14.0"
+
+[requires]
+python_version = "3.11"
+
+[scripts]
+app = "uvicorn --app-dir app main:app --reload"
+criar-db = "python app/criar-database.py"
+tests = "pytest -p no:cacheprovider"
