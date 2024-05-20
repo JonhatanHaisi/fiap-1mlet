@@ -83,3 +83,59 @@ Para iniciar a imagem docker localmente pode-se utilizar o comando a seguir:
 `docker run -it --rm -p 8000:80 1mlet`
 
 > O parâmetro -it inicializa o container em modo iterativo, e você vai ter acesso ao bash do container. O parâmetro exclui o container ao fim da execussão. O parâmetro -p é para o mapeamento da porta e permite o acesso à aplicação utilizando a url [http://localhost:8000](http://localhost:8000)
+
+
+# Documentação da aplicação
+
+> Os diagramas presentes nesse documento foram criados na ferramenta [Diagrams.net](https://app.diagrams.net/).
+
+
+## Importação de dados
+
+Para esse sistema são utilizados dados de [vinicultura da embrapa](http://vitibrasil.cnpuv.embrapa.br/index.php?opcao=opt_01). Por questões de simplicidade, serão utilizados os dados disponibilizados em formato csv, importados diretamente em banco de dados SQLite local.
+
+Os dados utilizados pessa aplicação são:
+
+* Produção
+* Processamento
+* Comercialização
+* Importação
+* Exportação
+
+O processo de importação de dados ocorre conforme descrito pelo dragrama a seguir.
+
+<img src="https://raw.githubusercontent.com/JonhatanHaisi/fiap-1mlet/main/documentos/diagramas/Fluxo_Geral_de_Importação_de_Dados.png" alt="diagrama geral de importação de dados">
+
+
+## Fluxo geral das APIs de dados
+
+APIs Rest são expostas para consulta dos dados do banco de dados obtidos por importação. Cada categoria de dados possui um conjunto de APIs para leitura de dados.
+
+As APIs foram implementadas conforme diagrama a seguir.
+
+<img src="https://raw.githubusercontent.com/JonhatanHaisi/fiap-1mlet/main/documentos/diagramas/Fluxo_Geral_das_APIs_de_Dados.png" alt="diagrama geral de APIs">
+
+
+## Processo de implantação
+
+O processo de implantação é dividido em 2 etapas, deployment da aplicação e deployment dos modelos de machine learning.
+
+> Casos de uso e modelos de machine learning a serem definidos no futuro.
+
+O deployment da aplicação será feito por containerização, portanto o processo de deployment deve:
+
+* Realizar o checkout da versão adequada da aplicação.
+* Criar uma imagem Docker com a aplicação e suas dependências
+* Realizar upload da imagem docker para o repositório adequado
+* Executar a nova versão do container na instância EC2 pré definida.
+
+
+
+O deployment de modelos de machine learning será feito por upload de arquivos em AWS Bucket pré definido. O processo de deployment será realizado conforme os passos a seguir:
+
+* Definição e treinamento de modelos de machine learning
+* upload de recursos relativos ao modelo de machine learning treinados em bucket AWS
+
+A estrutura geral do processo de build e deployment será como definido no diagrama a seguir:
+
+<img src="https://raw.githubusercontent.com/JonhatanHaisi/fiap-1mlet/main/documentos/diagramas/Diagrama_de_implantação.png" alt="diagrama de implantação">
