@@ -22,14 +22,30 @@ class User(Base):
         return f'User(id={self.id}, username={self.username})'
     
 
+class Grupo(Base):
+    __tablename__ = 'grupo'
+    
+    id: Mapped[int] = mapped_column(INTEGER, autoincrement=True, primary_key=True)
+    nome: Mapped[str] = mapped_column(VARCHAR(100), nullable=False)
+
+    produtos: Mapped[list['Produto']] = relationship('Produto', back_populates='grupo')
+    producao: Mapped[list['Producao']] = relationship('Producao', back_populates='grupo')
+
+    def __repr__(self):
+        return f'Grupo(id={self.id}, nome={self.nome})'
+
+
 # mapeamento da tabela produto
 # usando a estrutura declarativa do SQLAlchemy
 class Produto(Base):
     __tablename__ = 'produto'
     
-    id: Mapped[int] = mapped_column(INTEGER, primary_key=True)
+    id: Mapped[int] = mapped_column(INTEGER, autoincrement=True, primary_key=True)
     nome: Mapped[str] = mapped_column(VARCHAR(100), nullable=False)
+    control: Mapped[str] = mapped_column(VARCHAR(100), nullable=False)
+    grupo_id: Mapped[int] = mapped_column(ForeignKey('grupo.id'), nullable=False)
 
+    grupo: Mapped['Grupo'] = relationship('Grupo', back_populates='produtos')
     producao: Mapped[list['Producao']] = relationship('Producao', back_populates='produto')
 
     def __repr__(self):
@@ -44,9 +60,11 @@ class Producao(Base):
     id: Mapped[int] = mapped_column(INTEGER, autoincrement=True, primary_key=True)
     ano: Mapped[int] = mapped_column(INTEGER, nullable=False)
     quantidade: Mapped[int] = mapped_column(INTEGER, nullable=False)
-    produto_id: Mapped[int] = mapped_column(ForeignKey('produto.id'), nullable=False)
+    produto_id: Mapped[int] = mapped_column(ForeignKey('produto.id'), nullable=True)
+    grupo_id: Mapped[int] = mapped_column(ForeignKey('grupo.id'), nullable=True)
     
     produto: Mapped['Produto'] = relationship('Produto', back_populates='producao')
+    grupo: Mapped['Grupo'] = relationship('Grupo', back_populates='producao')
 
     def __repr__(self):
         return f'Producao(id={self.id}, ano={self.ano}, quantidade={self.quantidade}, produto_id={self.produto_id})'

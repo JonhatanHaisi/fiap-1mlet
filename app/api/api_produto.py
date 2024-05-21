@@ -53,7 +53,7 @@ async def listar_produto(session:Session=Depends(create_session), autenticado=De
 # o argumento "session" é uma sessão do banco de dados
 # o argumento "autenticado" é um booleano que indica se o usuário está autenticado
 @app.get("/produto/{id}/producao", response_model=List[models.Producao], tags=["produto"])
-async def obter_producao(id:int, session:Session=Depends(create_session), autenticado=Depends(autenticado)):
+async def obter_producao_do_produto(id:int, session:Session=Depends(create_session), autenticado=Depends(autenticado)):
     produto = session.query(entities.Produto).where(entities.Produto.id == id).first()
     # se o produto não for encontrado, retorna um erro 404
     if produto is None:

@@ -1,4 +1,4 @@
-from app.api.api_produto import obter_produto, listar_produto, obter_producao
+from app.api.api_produto import obter_produto, listar_produto, obter_producao_do_produto
 from app.models.entities import Produto, Producao
 from app.infra.database import Session
 
@@ -48,7 +48,7 @@ async def test_listar_produto(mocker): # define a função de teste
 
 
 @pytest.mark.asyncio # indica que a função é assíncrona
-async def test_obter_producao(mocker): # define a função de teste
+async def test_obter_producao_do_produto(mocker): # define a função de teste
     produto = Produto(id=1, nome='Produto 1', producao=[]) # cria um produto
     produto.producao.extend([ # adiciona produção ao produto
         Producao(id=1, ano=2021, quantidade=100, produto_id=1), 
@@ -60,20 +60,20 @@ async def test_obter_producao(mocker): # define a função de teste
                 .where.return_value. \
                 first.return_value = produto # configura o mock para retornar o produto
 
-    resultado = await obter_producao(1, mock_session, True) # chama a função obter_producao
+    resultado = await obter_producao_do_produto(1, mock_session, True) # chama a função obter_producao_do_produto
 
     assert resultado == produto.producao, 'A função obter_producao não retornou a lista de produção correta' # verifica se o resultado é a lista de produção esperada
 
 
 @pytest.mark.asyncio # indica que a função é assíncrona
-async def test_obter_producao_nao_encontrado(mocker):
+async def test_obter_producao_do_produto_nao_encontrado(mocker):
     mock_session = mocker.patch.object(Session, '__init__', return_value=None) # cria um mock da classe Session
     mock_session.query.return_value \
                 .where.return_value \
                 .first.return_value = None # configura o mock para retornar None
 
     with pytest.raises(Exception) as excinfo:
-        await obter_producao(1, mock_session, True) # chama a função obter_producao
+        await obter_producao_do_produto(1, mock_session, True) # chama a função obter_producao_do_produto
 
     assert 'Produção não encontrada' in str(excinfo.value), 'A função obter_producao não retornou o erro correto' # verifica se a exceção é a esperada
     
