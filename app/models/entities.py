@@ -30,6 +30,7 @@ class Grupo(Base):
 
     produtos: Mapped[list['Produto']] = relationship('Produto', back_populates='grupo')
     producao: Mapped[list['Producao']] = relationship('Producao', back_populates='grupo')
+    comercio: Mapped[list['Comercializacao']] = relationship('Comercializacao', back_populates='grupo')
 
     def __repr__(self):
         return f'Grupo(id={self.id}, nome={self.nome})'
@@ -47,6 +48,7 @@ class Produto(Base):
 
     grupo: Mapped['Grupo'] = relationship('Grupo', back_populates='produtos')
     producao: Mapped[list['Producao']] = relationship('Producao', back_populates='produto')
+    comercio: Mapped[list['Comercializacao']] = relationship('Comercializacao', back_populates='produto')
 
     def __repr__(self):
         return f'Produto(id={self.id}, nome={self.nome})'
@@ -68,3 +70,26 @@ class Producao(Base):
 
     def __repr__(self):
         return f'Producao(id={self.id}, ano={self.ano}, quantidade={self.quantidade}, produto_id={self.produto_id})'
+
+
+# ==============================================================================
+# COMERCIALIZAÇÃO
+# ==============================================================================
+class Comercializacao(Base):
+    __tablename__ = 'comercio'
+
+    id: Mapped[int] = mapped_column(
+        INTEGER, autoincrement=True, primary_key=True)
+    ano: Mapped[int] = mapped_column(INTEGER, nullable=False)
+    quantidade: Mapped[int] = mapped_column(INTEGER, nullable=False)
+    produto_id: Mapped[int] = mapped_column(
+        ForeignKey('produto.id'), nullable=True)
+    grupo_id: Mapped[int] = mapped_column(
+        ForeignKey('grupo.id'), nullable=True)
+
+    produto: Mapped['Produto'] = relationship(
+        'Produto', back_populates='comercio')
+    grupo: Mapped['Grupo'] = relationship('Grupo', back_populates='comercio')
+
+    def __repr__(self):
+        return f'Comercializacao(id={self.id}, ano={self.ano}, quantidade={self.quantidade}, produto_id={self.produto_id})'
