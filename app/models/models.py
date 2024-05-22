@@ -33,3 +33,12 @@ class Producao(BaseModel):
     ano: int
     quantidade: int
 
+class Comercializacao(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    ano: int
+    quantidade: int
+
+
+
