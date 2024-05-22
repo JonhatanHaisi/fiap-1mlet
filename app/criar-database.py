@@ -53,7 +53,7 @@ def preparar_dataset_grupo_produto(df:pd.DataFrame):
     lista_grupos = lista_grupos.drop(columns=['id','control', 'produto', 'produto_id'])
     lista_grupos = lista_grupos.melt(var_name='ano', value_name='valor', ignore_index=False)
 
-    lista_produtos.set_index('produto_id')
+    lista_produtos = lista_produtos.set_index('produto_id')
     lista_produtos = lista_produtos.drop(columns=['id','control', 'produto', 'grupo_id'])
     lista_produtos = lista_produtos.melt(var_name='ano', value_name='valor', ignore_index=False)
 
@@ -170,22 +170,22 @@ print(f'Dados de produção importados: {total_importados}')
 #==============================================================================
 # COMERCIALIZAÇÃO	
 #==============================================================================
-comercio = pd.read_csv('http://vitibrasil.cnpuv.embrapa.br/download/Comercio.csv', sep=';')
-comercio = normalizar_columas(comercio)
+comercializacao = pd.read_csv('http://vitibrasil.cnpuv.embrapa.br/download/Comercio.csv', sep=';')
+comercializacao = normalizar_columas(comercializacao)
 
-importar_grupos(comercio)
+importar_grupos(comercializacao)
 
-importar_produtos(comercio)
+importar_produtos(comercializacao)
 
-lista_grupos, lista_produtos = preparar_dataset_grupo_produto(comercio)
+lista_grupos, lista_produtos = preparar_dataset_grupo_produto(comercializacao)
 
 total_importados = 0
 print('Importando dados de comercializacao dos grupos...')
 for index, linha in lista_grupos.iterrows():
     if session.query(Comercializacao).where(Comercializacao.grupo_id == index, Comercializacao.ano == linha['ano']).first() is None:
-        comercio = Comercializacao(
+        comercializacao = Comercializacao(
             ano=linha['ano'], quantidade=linha['valor'], grupo_id=index)
-        session.add(comercio)  
+        session.add(comercializacao)  
         total_importados += 1  
 session.commit() 
 print(f'Dados de comercializacao importados: {total_importados}')
@@ -194,9 +194,9 @@ total_importados = 0
 print('Importando dados de comercializacao dos produtos...')
 for index, linha in lista_produtos.iterrows():
     if session.query(Comercializacao).where(Comercializacao.produto_id == index, Comercializacao.ano == linha['ano']).first() is None:
-        comercio = Comercializacao(
+        comercializacao = Comercializacao(
             ano=linha['ano'], quantidade=linha['valor'], produto_id=index)
-        session.add(comercio) 
+        session.add(comercializacao) 
         total_importados += 1 
 session.commit()  
 print(f'Dados de comercializacao importados: {total_importados}')
