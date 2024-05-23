@@ -26,7 +26,7 @@ def obter_grupos_mapeados():
     return { grupo.nome:grupo.id for grupo in session.query(Grupo).all() }
 
 def obter_produtos_mapeados():
-    return { produto.control : produto.id for produto in session.query(Produto).all() }
+    return { (produto.control, produto.grupo_id) : produto.id for produto in session.query(Produto).all() }
 
 def preparar_dataset_grupo_produto(df:pd.DataFrame):
     df = df.copy()
@@ -35,22 +35,26 @@ def preparar_dataset_grupo_produto(df:pd.DataFrame):
     map_grupo = obter_grupos_mapeados()
     map_produto = obter_produtos_mapeados()
 
+    # OBTEM OS IDS DE GRUPO
+    df['grupo_id'] = df['produto'].map(map_grupo)
+    df['grupo_id'] = df['grupo_id'].ffill()
+
+    # OBTEM OS IDS DE PRODUTO
+    keys = [ (r['control'], r['grupo_id']) for _,r in df.iterrows() ]
+    df['produto_id'] = [ map_produto.get(k) for k in keys ]
+
     # SEPARA OS GRUPOS DOS PRODUTOS EM 2 DATAFRAMES
     mascara = df['control'].isna() | (~df['control'].str.contains('_').astype(bool))
     lista_grupos = df.loc[mascara]
     lista_produtos = df.loc[~mascara]
 
-    # CRIA UMA COLUNA COM O ID DO GRUPO E DO PRODUTO
-    lista_grupos = lista_grupos.assign(grupo_id = lista_grupos['produto'].map(map_grupo))
-    lista_produtos = lista_produtos.assign(produto_id = lista_produtos['control'].map(map_produto))
-
     # LIMPA COLUNAS DESNECESSÁRIAS E MELT DOS DATAFRAMES
-    lista_grupos.set_index('grupo_id', inplace=True)
-    lista_grupos.drop(columns=['id','control', 'produto'], inplace=True)
+    lista_grupos = lista_grupos.set_index('grupo_id')
+    lista_grupos = lista_grupos.drop(columns=['id','control', 'produto', 'produto_id'])
     lista_grupos = lista_grupos.melt(var_name='ano', value_name='valor', ignore_index=False)
 
-    lista_produtos.set_index('produto_id', inplace=True)
-    lista_produtos.drop(columns=['id','control', 'produto'], inplace=True)
+    lista_produtos = lista_produtos.set_index('produto_id')
+    lista_produtos = lista_produtos.drop(columns=['id','control', 'produto', 'grupo_id'])
     lista_produtos = lista_produtos.melt(var_name='ano', value_name='valor', ignore_index=False)
 
     return lista_grupos, lista_produtos
@@ -110,8 +114,8 @@ def importar_produtos(df: pd.DataFrame):
     total_importados = 0
     for index, linha in df[~df['grupo']].iterrows():
         # se o produto ainda não foi importado, salva no banco de dados
-        if session.query(Produto).where(Produto.control == linha['control']).first() is None:
-            produto = Produto(nome=linha['produto'], control=linha['control'], grupo_id=linha['grupo_id']) # cria um objeto Produto
+        if session.query(Produto).where(Produto.control == linha['control']).where(Produto.grupo_id == linha['grupo_id']).first() is None:
+            produto = Produto(nome=linha['produto'].strip(), control=linha['control'], grupo_id=linha['grupo_id']) # cria um objeto Produto
             session.add(produto) # adiciona o objeto ao banco de dados
             total_importados += 1 # incrementa o contador de produtos importados
     session.commit() # salva as alterações no banco de dados
@@ -166,7 +170,6 @@ print(f'Dados de produção importados: {total_importados}')
 #==============================================================================
 # COMERCIALIZAÇÃO	
 #==============================================================================
-# ....
 comercializacao = pd.read_csv('http://vitibrasil.cnpuv.embrapa.br/download/Comercio.csv', sep=';')
 comercializacao = normalizar_columas(comercializacao)
 
