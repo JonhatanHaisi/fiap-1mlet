@@ -53,7 +53,7 @@ def preparar_dataset_grupo_produto(df:pd.DataFrame):
     lista_grupos = lista_grupos.drop(columns=['id','control', 'produto', 'produto_id'])
     lista_grupos = lista_grupos.melt(var_name='ano', value_name='valor', ignore_index=False)
 
-    lista_produtos.set_index('produto_id')
+    lista_produtos = lista_produtos.set_index('produto_id')
     lista_produtos = lista_produtos.drop(columns=['id','control', 'produto', 'grupo_id'])
     lista_produtos = lista_produtos.melt(var_name='ano', value_name='valor', ignore_index=False)
 
