@@ -22,13 +22,14 @@ from fastapi import Depends, HTTPException
 # o argumento "session" é uma sessão do banco de dados
 # o argumento "autenticado" é um booleano que indica se o usuário está autenticado
 @app.get("/produto/{id}", response_model=models.Produto, tags=["produto"])
-async def obter_produto(id:int, session:Session=Depends(create_session), autenticado=Depends(autenticado)):
-    produto = session.query(entities.Produto).where(entities.Produto.id == id).first()
-    
+async def obter_produto(id: int, session: Session = Depends(create_session), autenticado=Depends(autenticado)):
+    produto = session.query(entities.Produto).where(
+        entities.Produto.id == id).first()
+
     # se o produto não for encontrado, retorna um erro 404
     if produto is None:
         raise HTTPException(status_code=404, detail="Produto não encontrado")
-    
+
     return produto
 
 
@@ -40,9 +41,9 @@ async def obter_produto(id:int, session:Session=Depends(create_session), autenti
 # o argumento "session" é uma sessão do banco de dados
 # o argumento "autenticado" é um booleano que indica se o usuário está autenticado
 @app.get("/produto", response_model=List[models.Produto], tags=["produto"])
-async def listar_produto(session:Session=Depends(create_session), autenticado=Depends(autenticado)):
+async def listar_produto(session: Session = Depends(create_session), autenticado=Depends(autenticado)):
     return session.query(entities.Produto).all()
-    
+
 
 # "/produto/{id}/producao" é o prefixo da rota e "{id}" é um parâmetro
 # o parâmetro "{id}" é passado para a função como um argumento
@@ -53,9 +54,20 @@ async def listar_produto(session:Session=Depends(create_session), autenticado=De
 # o argumento "session" é uma sessão do banco de dados
 # o argumento "autenticado" é um booleano que indica se o usuário está autenticado
 @app.get("/produto/{id}/producao", response_model=List[models.Producao], tags=["produto"])
-async def obter_producao_do_produto(id:int, session:Session=Depends(create_session), autenticado=Depends(autenticado)):
-    produto = session.query(entities.Produto).where(entities.Produto.id == id).first()
+async def obter_producao_do_produto(id: int, session: Session = Depends(create_session), autenticado=Depends(autenticado)):
+    produto = session.query(entities.Produto).where(
+        entities.Produto.id == id).first()
     # se o produto não for encontrado, retorna um erro 404
     if produto is None:
         raise HTTPException(status_code=404, detail="Produção não encontrada")
     return produto.producao
+
+
+
+@app.get("/produto/{id}/comercializacao", response_model=List[models.Comercializacao], tags=["comercializacao"])
+async def obter_comercio_do_produto(id:int, session:Session=Depends(create_session), autenticado=Depends(autenticado)):
+    produto = session.query(entities.Produto).where(entities.Produto.id == id).first()
+    # se o produto não for encontrado, retorna um erro 404
+    if produto is None:
+        raise HTTPException(status_code=404, detail="Produção não encontrada")
+    return produto.comercializacao
