@@ -36,3 +36,11 @@ async def obter_producao_do_grupo(id:int, session:Session=Depends(create_session
     if grupo is None:
         raise HTTPException(status_code=404, detail="Grupo não encontrada")
     return grupo.producao
+
+
+@app.get("/grupo/{id}/comercializacao", response_model=List[models.Comercializacao], tags=["grupo"])
+async def obter_comercializacao_do_grupo(id:int, session:Session=Depends(create_session), autenticado=Depends(autenticado)):
+    grupo = session.query(entities.Grupo).where(entities.Grupo.id == id).first()
+    if grupo is None:
+        raise HTTPException(status_code=404, detail="Grupo não encontrado")
+    return grupo.comercializacao
