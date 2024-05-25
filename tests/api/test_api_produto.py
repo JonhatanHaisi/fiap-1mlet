@@ -1,5 +1,5 @@
-from app.api.api_produto import obter_produto, listar_produto, obter_producao_do_produto
-from app.models.entities import Produto, Producao
+from app.api.api_produto import obter_produto, listar_produto, obter_producao_do_produto, obter_comercializacao_do_produto
+from app.models.entities import Produto, Producao, Comercializacao
 from app.infra.database import Session
 
 from pytest_mock import MockerFixture
@@ -76,4 +76,38 @@ async def test_obter_producao_do_produto_nao_encontrado(mocker):
         await obter_producao_do_produto(1, mock_session, True) # chama a função obter_producao_do_produto
 
     assert 'Produção não encontrada' in str(excinfo.value), 'A função obter_producao não retornou o erro correto' # verifica se a exceção é a esperada
-    
+
+#==============================================================================
+# COMERCIALIZAÇÃO	
+#==============================================================================
+@pytest.mark.asyncio # indica que a função é assíncrona
+async def test_obter_comercializacao_do_produto(mocker): 
+    produto = Produto(id=1, nome='Produto 1', comercializacao=[])
+    produto.comercializacao.extend([ 
+        Comercializacao(id=1, ano=2021, quantidade=100, produto_id=1), 
+        Comercializacao(id=2, ano=2020, quantidade=200, produto_id=1)
+    ])
+
+    mock_session = mocker.patch.object(Session, '__init__', return_value=None) 
+    mock_session.query.return_value \
+                .where.return_value. \
+                first.return_value = produto 
+
+    resultado = await obter_comercializacao_do_produto(1, mock_session, True) 
+
+    assert resultado == produto.comercializacao, 'A função obter_comercializacao não retornou a lista de comercialização correta' 
+
+
+@pytest.mark.asyncio 
+async def test_obter_comercializacao_do_produto_nao_encontrado(mocker):
+    mock_session = mocker.patch.object(Session, '__init__', return_value=None) 
+    mock_session.query.return_value \
+                .where.return_value \
+                .first.return_value = None 
+
+    with pytest.raises(Exception) as excinfo:
+        await obter_comercializacao_do_produto(1, mock_session, True) 
+
+    assert 'Comercialização não encontrado' in str(excinfo.value), 'A função obter_comercializacao não retornou o erro correto' 
+
+
