@@ -44,3 +44,35 @@ async def obter_comercializacao_do_grupo(id:int, session:Session=Depends(create_
     if grupo is None:
         raise HTTPException(status_code=404, detail="Grupo não encontrado")
     return grupo.comercializacao
+
+@app.get("/grupo/{id}/importacao_quantidade", response_model=List[models.Quantidade], tags=["grupo"])
+async def obter_importacao_quantidade(id:int, session:Session=Depends(create_session), autenticado=Depends(autenticado)):
+    quantidade = session.query(entities.Quantidade).where(entities.Quantidade.grupo_id == id).where(entities.Quantidade.categoria == 'importacao').all()
+    # se o produto não for encontrado, retorna um erro 404
+    if len(quantidade) == 0 :
+        raise HTTPException(status_code=404, detail="Quantidade de importação por grupo não encontrada")
+    return quantidade
+
+@app.get("/grupo/{id}/importacao_faturamento", response_model=List[models.Faturamento], tags=["grupo"])
+async def obter_importacao_faturamento(id:int, session:Session=Depends(create_session), autenticado=Depends(autenticado)):
+    faturamento = session.query(entities.Faturamento).where(entities.Faturamento.grupo_id == id).where(entities.Faturamento.categoria == 'importacao').all()
+    # se o produto não for encontrado, retorna um erro 404
+    if len(faturamento) == 0 :
+        raise HTTPException(status_code=404, detail="Faturamento de importação por grupo não encontrada")
+    return faturamento
+
+@app.get("/grupo/{id}/exportacao_quantidade", response_model=List[models.Quantidade], tags=["grupo"])
+async def obter_exportacao_quantidade(id:int, session:Session=Depends(create_session), autenticado=Depends(autenticado)):
+    quantidade = session.query(entities.Quantidade).where(entities.Quantidade.grupo_id == id).where(entities.Quantidade.categoria == 'exportacao').all()
+    # se o produto não for encontrado, retorna um erro 404
+    if len(quantidade) == 0 :
+        raise HTTPException(status_code=404, detail="Quantidade de exportação por grupo não encontrada")
+    return quantidade
+
+@app.get("/grupo/{id}/exportacao_faturamento", response_model=List[models.Faturamento], tags=["grupo"])
+async def obter_exportacao_faturamento(id:int, session:Session=Depends(create_session), autenticado=Depends(autenticado)):
+    faturamento = session.query(entities.Faturamento).where(entities.Faturamento.grupo_id == id).where(entities.Faturamento.categoria == 'exportacao').all()
+    # se o produto não for encontrado, retorna um erro 404
+    if len(faturamento) == 0 :
+        raise HTTPException(status_code=404, detail="Faturamento de exportação por grupo não encontrada")
+    return faturamento

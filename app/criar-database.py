@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import create_engine
 from pathlib import Path
-from models.entities import Base, User, Grupo, Produto, Producao, Comercializacao
+from models.entities import Base, User, Grupo, Produto, Producao, Comercializacao, Pais, Quantidade, Faturamento
 
 import pandas as pd
 import hashlib
@@ -27,6 +27,9 @@ def obter_grupos_mapeados():
 
 def obter_produtos_mapeados():
     return { (produto.control, produto.grupo_id) : produto.id for produto in session.query(Produto).all() }
+
+def obter_pais_mapeados(): 
+    return { pais.nome:pais.id for pais in session.query(Pais).all() }
 
 def preparar_dataset_grupo_produto(df:pd.DataFrame):
     df = df.copy()
@@ -58,6 +61,24 @@ def preparar_dataset_grupo_produto(df:pd.DataFrame):
     lista_produtos = lista_produtos.melt(var_name='ano', value_name='valor', ignore_index=False)
 
     return lista_grupos, lista_produtos
+
+def preparar_dataset_importacao_exportacao(df:pd.DataFrame):
+    # Alterando a estrutura dos dados do dataframe para facilitar a importação de dados de importacção e exportacao de produto
+    #MAPEA PAISES NO BANCO DE DADOS
+    maps_pais = obter_pais_mapeados()
+
+    df['pais_id'] = df['país'].map(maps_pais)
+
+    df = df.set_index('id')
+    df = df.drop(columns='país') # a coluna com o nome do pais é removida
+    #separação de tabela por quantidade e faturamento
+    df = df.melt(id_vars=['pais_id', 'produto','control'], var_name='ano', value_name='valor', ignore_index=False)# transforma colunas em linhas
+    df['valor'] = df['valor'].fillna(0) # preenche NaN com zeros
+    lista_quantidade = df[df['ano'].str.len() == 4] # filtra apenas quantidade
+    lista_faturamento = df[df['ano'].str.len() <= 5] # filtra apenas o faturamento
+    lista_faturamento['ano'] = lista_faturamento['ano'].astype(float).astype(int) #transforma objeto em inteiro
+
+    return lista_quantidade, lista_faturamento
 
 #==============================================================================
 # USERS
@@ -91,7 +112,6 @@ def importar_grupos(df: pd.DataFrame):
     session.commit() # salva as alterações no banco de dados
     print(f'Grupos importados: {total_importados}')
 
-
 def importar_produtos(df: pd.DataFrame):
     df = df.copy()
     
@@ -120,6 +140,80 @@ def importar_produtos(df: pd.DataFrame):
             total_importados += 1 # incrementa o contador de produtos importados
     session.commit() # salva as alterações no banco de dados
     print(f'Produtos importados: {total_importados}')
+
+#importação para banco de dados dos paises
+def importa_pais(df:pd.DataFrame):
+    # Salvando no banco de dados todos os paises que ainda não foram importados:
+    total_importados = 0
+    for _, linha in df.iterrows():
+        # se o pais ainda não foi importado, salva no banco de dados
+        if session.query(Pais).where(Pais.nome == linha['país']).first() is None:
+            pais = Pais(nome=linha['país']) # cria um objeto impVinho
+            session.add(pais) # adiciona o objeto ao banco de dados
+            total_importados += 1 # incrementa o contador de impVinho importados
+    session.commit() # salva as alterações no banco de dados
+    print(f'Importação de paises: {total_importados}')    
+
+#importacao para banco de dados da quantidade de grupos importados e exportados 
+def importa_quantidade(df:pd.DataFrame):
+    df = df.copy()
+
+    # OBTEM OS MAPAS DE GRUPOS
+    map_grupo = obter_grupos_mapeados()
+
+    # OBTEM OS IDS DE GRUPO
+    df['grupo_id'] = df['produto'].map(map_grupo)
+    df['grupo_id'] = df['grupo_id'].ffill()
+
+    # Salvando no banco de dados todos os dados de produção que ainda não foram importados:
+    total_importados = 0
+    for _, linha in df.iterrows():
+        # se o Quantidade do produto para o ano ainda não foi importada, salva no banco de dados
+        if session.query(Quantidade).where(Quantidade.pais_id == linha['pais_id'], Quantidade.grupo_id == linha['grupo_id'], Quantidade.categoria == linha['control'], Quantidade.ano == linha['ano']).first() is None:
+            quantidade = Quantidade(categoria=linha['control'], ano=linha['ano'], quantidade=linha['valor'],  grupo_id=linha['grupo_id'], pais_id=linha['pais_id']) # cria um objeto Faturamento
+            session.add(quantidade) # adiciona o objeto ao banco de dados
+            total_importados += 1 # incrementa o contador de dados de produção importados
+    session.commit() # salva as alterações no banco de dados
+    print(f'Dados de quantidade de importação - importados: {total_importados}')
+
+#importacao para banco de dados do faturamento de grupos importados e exportados 
+def importa_faturamento(df:pd.DataFrame):
+    df = df.copy()
+
+    # OBTEM OS MAPAS DE GRUPOS
+    map_grupo = obter_grupos_mapeados()
+
+    # OBTEM OS IDS DE GRUPO
+    df['grupo_id'] = df['produto'].map(map_grupo)
+    df['grupo_id'] = df['grupo_id'].ffill()
+
+    total_importados = 0
+    for index, linha in df.iterrows():
+        # se o faturamento do produto para o ano ainda não foi importada, salva no banco de dados
+        if session.query(Faturamento).where(Faturamento.pais_id == linha['pais_id'], Faturamento.grupo_id == linha['grupo_id'],Faturamento.categoria == linha['control'], Faturamento.ano == linha['ano']).first() is None:
+            fatura = Faturamento(categoria=linha['control'], ano=linha['ano'], faturamento=linha['valor'],  grupo_id=linha['grupo_id'], pais_id=linha['pais_id']) # cria um objeto Faturamento
+            session.add(fatura) # adiciona o objeto ao banco de dados
+            total_importados += 1 # incrementa o contador de dados de produção importados
+    session.commit() # salva as alterações no banco de dados
+    print(f'Dados de faturamento de importação - importados: {total_importados}')
+
+#faz o tratamento dos arquivos de importação e exportação
+def importar_dados_importacao_exportacao(url, nome_grupo, control):
+    df = pd.read_csv(url, sep=';')
+    df = normalizar_columas(df)
+    df['produto'] = nome_grupo
+    df['control'] = control
+
+    importar_grupos(df)
+
+    importa_pais(df)
+
+    # PREPARA ARQUIVO PARA IMPORTAR
+    quantidade, faturamento = preparar_dataset_importacao_exportacao(df)
+
+    importa_quantidade(quantidade)
+
+    importa_faturamento(faturamento)
 
 #==============================================================================
 # PRODUÇÃO
@@ -204,13 +298,19 @@ print(f'Dados de comercializacao importados: {total_importados}')
 #==============================================================================
 # IMPORTAÇÃO
 #==============================================================================
-# ....
-
+importar_dados_importacao_exportacao('http://vitibrasil.cnpuv.embrapa.br/download/ImpVinhos.csv', 'VINHO DE MESA', 'importacao')
+importar_dados_importacao_exportacao('http://vitibrasil.cnpuv.embrapa.br/download/ImpEspumantes.csv', 'ESPUMANTES', 'importacao')
+importar_dados_importacao_exportacao('http://vitibrasil.cnpuv.embrapa.br/download/ImpFrescas.csv', 'UVAS FRESCAS', 'importacao')
+importar_dados_importacao_exportacao('http://vitibrasil.cnpuv.embrapa.br/download/ImpPassas.csv', 'UVAS PASSAS', 'importacao')
+importar_dados_importacao_exportacao('http://vitibrasil.cnpuv.embrapa.br/download/ImpSuco.csv', 'SUCO DE UVAS', 'importacao')
 
 #==============================================================================
 # EXPORTAÇÃO
 #==============================================================================
-# ....
+importar_dados_importacao_exportacao('http://vitibrasil.cnpuv.embrapa.br/download/ExpVinho.csv', 'VINHO DE MESA', 'exportacao')
+importar_dados_importacao_exportacao('http://vitibrasil.cnpuv.embrapa.br/download/ExpEspumantes.csv', 'ESPUMANTES', 'exportacao')
+importar_dados_importacao_exportacao('http://vitibrasil.cnpuv.embrapa.br/download/ExpUva.csv', 'UVAS FRESCAS', 'exportacao')
+importar_dados_importacao_exportacao('http://vitibrasil.cnpuv.embrapa.br/download/ExpSuco.csv', 'SUCO DE UVAS', 'exportacao')
 
 
 #==============================================================================

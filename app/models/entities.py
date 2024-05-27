@@ -31,6 +31,8 @@ class Grupo(Base):
     produtos: Mapped[list['Produto']] = relationship('Produto', back_populates='grupo')
     producao: Mapped[list['Producao']] = relationship('Producao', back_populates='grupo')
     comercializacao: Mapped[list['Comercializacao']] = relationship('Comercializacao', back_populates='grupo')
+    quantidade: Mapped[list['Quantidade']] = relationship('Quantidade', back_populates='grupo')
+    faturamento: Mapped[list['Faturamento']] = relationship('Faturamento', back_populates='grupo')
 
     def __repr__(self):
         return f'Grupo(id={self.id}, nome={self.nome})'
@@ -93,3 +95,51 @@ class Comercializacao(Base):
 
     def __repr__(self):
         return f'Comercializacao(id={self.id}, ano={self.ano}, quantidade={self.quantidade}, produto_id={self.produto_id})'
+    
+    
+class Pais(Base):
+    __tablename__ = 'pais'
+    
+    id: Mapped[int] = mapped_column(INTEGER, primary_key=True)
+    nome: Mapped[str] = mapped_column(VARCHAR(100), nullable=False)
+    quantidade: Mapped[list['Quantidade']] = relationship('Quantidade', back_populates='pais')
+    faturamento: Mapped[list['Faturamento']] = relationship('Faturamento', back_populates='pais')
+
+    def __repr__(self):
+        return f'Pais(id={self.id}, pais={self.nome})'
+
+class Quantidade(Base):
+    __tablename__ = 'quantidade'
+    
+    id: Mapped[int] = mapped_column(INTEGER, autoincrement=True, primary_key=True)
+    categoria: Mapped[str] = mapped_column(VARCHAR(100), nullable=False)
+    ano: Mapped[int] = mapped_column(INTEGER, nullable=False)
+    quantidade: Mapped[int] = mapped_column(INTEGER, nullable=False)
+    grupo_id: Mapped[int] = mapped_column(
+        ForeignKey('grupo.id'), nullable=True)
+    pais_id: Mapped[int] = mapped_column(
+        ForeignKey('pais.id'), nullable=False)
+    grupo: Mapped['Grupo'] = relationship('Grupo', back_populates='quantidade')
+    pais: Mapped['Pais'] = relationship('Pais', back_populates='quantidade')
+   
+    
+    def __repr__(self):
+        return f'Quantidade(id={self.id}, ano={self.ano}, quantidade={self.quantidade}, pais_id={self.pais_id})'
+
+class Faturamento(Base):
+    __tablename__ = 'faturamento'
+    
+    id: Mapped[int] = mapped_column(INTEGER, autoincrement=True, primary_key=True)
+    categoria: Mapped[str] = mapped_column(VARCHAR(100), nullable=False)
+    ano: Mapped[int] = mapped_column(INTEGER, nullable=False)
+    faturamento: Mapped[int] = mapped_column(INTEGER, nullable=False)
+    grupo_id: Mapped[int] = mapped_column(
+        ForeignKey('grupo.id'), nullable=True)
+    pais_id: Mapped[int] = mapped_column(
+        ForeignKey('pais.id'), nullable=False)
+    grupo: Mapped['Grupo'] = relationship('Grupo', back_populates='faturamento')
+    pais: Mapped['Pais'] = relationship('Pais', back_populates='faturamento')
+   
+    
+    def __repr__(self):
+        return f'Faturamento(id={self.id}, ano={self.ano}, faturamento={self.faturamento}, pais_id={self.pais_id})'
