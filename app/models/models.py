@@ -40,5 +40,30 @@ class Comercializacao(BaseModel):
     ano: int
     quantidade: int
 
+class Pais(BaseModel):
+    # Configuração para permitir a serialização e desserialização de objetos
+    model_config = ConfigDict(from_attributes=True)
+
+    # atributos do modelo
+    id: int
+    nome: str
+
+class Quantidade(BaseModel):
+    # Configuração para permitir a serialização e desserialização de objetos
+    model_config = ConfigDict(from_attributes=True)
+
+    # atributos do modelo
+    id: int
+    ano: int
+    quantidade: int
+
+class Faturamento(BaseModel):
+    # Configuração para permitir a serialização e desserialização de objetos
+    model_config = ConfigDict(from_attributes=True)
+
+    # atributos do modelo
+    id: int
+    ano: int
+    faturamento: int
 
 

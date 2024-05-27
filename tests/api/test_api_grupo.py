@@ -1,5 +1,5 @@
-from app.api.api_grupo import obter_grupo, listar_grupo, obter_produtos_do_grupo, obter_producao_do_grupo, obter_comercializacao_do_grupo
-from app.models.entities import Grupo, Produto, Producao, Comercializacao
+from app.api.api_grupo import obter_grupo, listar_grupo, obter_produtos_do_grupo, obter_producao_do_grupo, obter_comercializacao_do_grupo, obter_importacao_quantidade
+from app.models.entities import Grupo, Produto, Producao, Comercializacao, Quantidade, Faturamento
 from app.infra.database import Session
 
 from pytest_mock import MockerFixture
@@ -141,4 +141,40 @@ async def test_obter_comercializacao_do_grupo_nao_encontrado(mocker: MockerFixtu
         await obter_comercializacao_do_grupo(1, session_mock, True)
         
     assert 'Grupo não encontrado' in str(excinfo.value), 'A função obter_comercializacao_do_grupo não retornou o erro correto'
+
+#==============================================================================
+# IMPORTAÇÃO	
+#==============================================================================
+
+@pytest.mark.asyncio
+async def test_obter_importacao_quantidade(mocker: MockerFixture):
+    lista_quantidade = [
+        Quantidade(id=1, grupo_id=1, quantidade=10),
+        Quantidade(id=2, grupo_id=1, quantidade=20)
+    ]
+
+    session_mock = mocker.patch.object(Session, '__init__', return_value=None)
+    session_mock.query.return_value \
+                .where.return_value \
+                .where.return_value \
+                .all.return_value = lista_quantidade
     
+    resultado = await obter_importacao_quantidade(1, session_mock, True)
+
+    assert resultado == lista_quantidade, 'A função obter_importacao_quantidade não retornou a comercialização correta'
+
+@pytest.mark.asyncio
+async def test_obter_importacao_quantidade_nao_encontrado(mocker: MockerFixture):
+    session_mock = mocker.patch.object(Session, '__init__', return_value=None)
+    session_mock.query.return_value \
+                .where.return_value \
+                .where.return_value \
+                .all.return_value = []
+
+    with pytest.raises(Exception) as excinfo:
+        await obter_importacao_quantidade(1, session_mock, True)
+        
+    assert 'Quantidade de importação por grupo não encontrada' in str(excinfo.value), 'A função obter_importacao_quantidade não retornou o erro correto'
+
+
+
