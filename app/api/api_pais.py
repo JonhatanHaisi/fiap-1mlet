@@ -30,7 +30,7 @@ async def obter_importacao_quantidade(id:int, session:Session=Depends(create_ses
     return quantidade
 
 @app.get("/pais/{id}/importacao_faturamento", response_model=List[models.Faturamento], tags=["pais"])
-async def obter_importacao_quantidade(id:int, session:Session=Depends(create_session), autenticado=Depends(autenticado)):
+async def obter_importacao_faturamento(id:int, session:Session=Depends(create_session), autenticado=Depends(autenticado)):
     faturamento = session.query(entities.Faturamento).where(entities.Faturamento.pais_id == id).where(entities.Faturamento.categoria == 'importacao').all()
     # se o produto não for encontrado, retorna um erro 404
     if len(faturamento) == 0 :
@@ -38,7 +38,7 @@ async def obter_importacao_quantidade(id:int, session:Session=Depends(create_ses
     return faturamento
 
 @app.get("/pais/{id}/exportacao_quantidade", response_model=List[models.Quantidade], tags=["pais"])
-async def obter_importacao_quantidade(id:int, session:Session=Depends(create_session), autenticado=Depends(autenticado)):
+async def obter_exportacao_quantidade(id:int, session:Session=Depends(create_session), autenticado=Depends(autenticado)):
     quantidade = session.query(entities.Quantidade).where(entities.Quantidade.pais_id == id).where(entities.Quantidade.categoria == 'exportacao').all()
     # se o produto não for encontrado, retorna um erro 404
     if len(quantidade) == 0 :
@@ -46,7 +46,7 @@ async def obter_importacao_quantidade(id:int, session:Session=Depends(create_ses
     return quantidade
 
 @app.get("/pais/{id}/exportacao_faturamento", response_model=List[models.Faturamento], tags=["pais"])
-async def obter_importacao_quantidade(id:int, session:Session=Depends(create_session), autenticado=Depends(autenticado)):
+async def obter_exportacao_faturamento(id:int, session:Session=Depends(create_session), autenticado=Depends(autenticado)):
     faturamento = session.query(entities.Faturamento).where(entities.Faturamento.pais_id == id).where(entities.Faturamento.categoria == 'exportacao').all()
     # se o produto não for encontrado, retorna um erro 404
     if len(faturamento) == 0 :
