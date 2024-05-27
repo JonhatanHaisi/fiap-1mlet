@@ -66,4 +66,9 @@ class Faturamento(BaseModel):
     ano: int
     faturamento: int
 
+class Processamento(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
 
+    id: int
+    ano: int
+    quantidade: int
