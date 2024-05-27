@@ -1,5 +1,5 @@
-from app.api.api_grupo import obter_grupo, listar_grupo, obter_produtos_do_grupo, obter_producao_do_grupo, obter_comercializacao_do_grupo, obter_importacao_quantidade,obter_importacao_faturamento, obter_exportacao_quantidade, obter_exportacao_faturamento
-from app.models.entities import Grupo, Produto, Producao, Comercializacao, Quantidade, Faturamento
+from app.api.api_grupo import obter_grupo, listar_grupo, obter_produtos_do_grupo, obter_producao_do_grupo, obter_comercializacao_do_grupo, obter_importacao_quantidade,obter_importacao_faturamento, obter_exportacao_quantidade, obter_exportacao_faturamento, obter_processamento_do_grupo
+from app.models.entities import Grupo, Produto, Producao, Comercializacao, Quantidade, Faturamento, Processamento
 from app.infra.database import Session
 
 from pytest_mock import MockerFixture
@@ -178,8 +178,8 @@ async def test_obter_importacao_quantidade_nao_encontrado(mocker: MockerFixture)
 @pytest.mark.asyncio
 async def test_obter_importacao_faturamento(mocker: MockerFixture):
     lista_faturamento = [
-        Quantidade(id=1, grupo_id=1, quantidade=10),
-        Quantidade(id=2, grupo_id=1, quantidade=20)
+        Faturamento(id=1, grupo_id=1, faturamento=10),
+        Faturamento(id=2, grupo_id=1, faturamento=20)
     ]
 
     session_mock = mocker.patch.object(Session, '__init__', return_value=None)
@@ -190,7 +190,7 @@ async def test_obter_importacao_faturamento(mocker: MockerFixture):
     
     resultado = await obter_importacao_faturamento(1, session_mock, True)
 
-    assert resultado == lista_faturamento, 'A função obter_importacao_faturamento não retornou a comercialização correta'
+    assert resultado == lista_faturamento, 'A função obter_importacao_faturamento não retornou o faturamento correto'
 
 @pytest.mark.asyncio
 async def test_obter_importacao_faturamento_nao_encontrado(mocker: MockerFixture):
@@ -220,7 +220,7 @@ async def test_obter_exportacao_quantidade(mocker: MockerFixture):
     
     resultado = await obter_exportacao_quantidade(1, session_mock, True)
 
-    assert resultado == lista_quantidade, 'A função obter_exportacao_quantidade não retornou a comercialização correta'
+    assert resultado == lista_quantidade, 'A função obter_exportacao_quantidade não retornou a quatidade correta'
 
 @pytest.mark.asyncio
 async def test_obter_exportacao_quantidade_nao_encontrado(mocker: MockerFixture):
@@ -238,8 +238,8 @@ async def test_obter_exportacao_quantidade_nao_encontrado(mocker: MockerFixture)
 @pytest.mark.asyncio
 async def test_obter_exportacao_faturamento(mocker: MockerFixture):
     lista_faturamento = [
-        Quantidade(id=1, grupo_id=1, quantidade=10),
-        Quantidade(id=2, grupo_id=1, quantidade=20)
+        Faturamento(id=1, grupo_id=1, faturamento=10),
+        Faturamento(id=2, grupo_id=1, faturamento=20)
     ]
 
     session_mock = mocker.patch.object(Session, '__init__', return_value=None)
@@ -250,7 +250,7 @@ async def test_obter_exportacao_faturamento(mocker: MockerFixture):
     
     resultado = await obter_exportacao_faturamento(1, session_mock, True)
 
-    assert resultado == lista_faturamento, 'A função obter_exportacao_faturamento não retornou a comercialização correta'
+    assert resultado == lista_faturamento, 'A função obter_exportacao_faturamento não retornou a exportação correta'
 
 @pytest.mark.asyncio
 async def test_obter_exportacao_faturamento(mocker: MockerFixture):
@@ -266,3 +266,18 @@ async def test_obter_exportacao_faturamento(mocker: MockerFixture):
     assert 'Faturamento de exportação por grupo não encontrada' in str(excinfo.value), 'A função obter_exportacao_faturamento não retornou o erro correto'
 
 
+@pytest.mark.asyncio
+async def test_obter_processamento_do_grupo(mocker: MockerFixture):
+    grupo = Grupo(id=1, nome='Grupo 1', processamento=[
+        Processamento(id=1, grupo_id=1, quantidade=10),
+        Processamento(id=2, grupo_id=1, quantidade=20)
+    ])
+
+    session_mock = mocker.patch.object(Session, '__init__', return_value=None)
+    session_mock.query.return_value \
+                .where.return_value \
+                .first.return_value = grupo
+    
+    resultado = await obter_processamento_do_grupo(1, session_mock, True)
+
+    assert resultado == grupo.processamento, 'A função obter_processamento_do_grupo não retornou o processamento correto'

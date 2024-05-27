@@ -1,5 +1,5 @@
-from app.api.api_produto import obter_produto, listar_produto, obter_producao_do_produto, obter_comercializacao_do_produto
-from app.models.entities import Produto, Producao, Comercializacao
+from app.api.api_produto import obter_produto, listar_produto, obter_producao_do_produto, obter_comercializacao_do_produto, obter_processamento_do_produto
+from app.models.entities import Produto, Producao, Comercializacao, Processamento
 from app.infra.database import Session
 
 from pytest_mock import MockerFixture
@@ -111,3 +111,20 @@ async def test_obter_comercializacao_do_produto_nao_encontrado(mocker):
     assert 'Comercialização não encontrado' in str(excinfo.value), 'A função obter_comercializacao não retornou o erro correto' 
 
 
+
+@pytest.mark.asyncio # indica que a função é assíncrona
+async def test_obter_processamento_do_produto(mocker): 
+    produto = Produto(id=1, nome='Produto 1', processamento=[])
+    produto.processamento.extend([ 
+        Processamento(id=1, ano=2021, quantidade=100, produto_id=1), 
+        Processamento(id=2, ano=2020, quantidade=200, produto_id=1)
+    ])
+
+    mock_session = mocker.patch.object(Session, '__init__', return_value=None) 
+    mock_session.query.return_value \
+                .where.return_value. \
+                first.return_value = produto 
+
+    resultado = await obter_processamento_do_produto(1, mock_session, True) 
+
+    assert resultado == produto.processamento, 'A função obter_processamento não retornou a lista de processamento correta'

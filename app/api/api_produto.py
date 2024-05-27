@@ -71,7 +71,7 @@ async def obter_comercializacao_do_produto(id:int, session: Session = Depends(cr
         raise HTTPException(status_code=404, detail="Comercialização não encontrado")
     return produto.comercializacao
 
-@app.get("/produto/{id}/processamento", response_model=List[models.Processamento], tags=["processamento"])
+@app.get("/produto/{id}/processamento", response_model=List[models.Processamento], tags=["produto"])
 async def obter_processamento_do_produto(id:int , session:Session=Depends(create_session), autenticado=Depends(autenticado)):
     produto = session.query(entities.Produto).where(entities.Produto.id == id).first()
     # se o produto não for encontrado, retorna um erro 404

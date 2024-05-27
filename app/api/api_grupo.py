@@ -76,3 +76,13 @@ async def obter_exportacao_faturamento(id:int, session:Session=Depends(create_se
     if len(faturamento) == 0 :
         raise HTTPException(status_code=404, detail="Faturamento de exportação por grupo não encontrada")
     return faturamento
+
+
+@app.get("/grupo/{id}/processamento", response_model=List[models.Processamento], tags=["grupo"])
+async def obter_processamento_do_grupo(id:int , session:Session=Depends(create_session), autenticado=Depends(autenticado)):
+    grupo = session.query(entities.Grupo).where(entities.Grupo.id == id).first()
+    # se o produto não for encontrado, retorna um erro 404
+    if grupo is None:
+        raise HTTPException(status_code=404, detail="Grupo não encontrado")
+    return grupo.processamento
+

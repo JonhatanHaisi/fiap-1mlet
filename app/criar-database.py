@@ -262,7 +262,7 @@ def importacao_processamento(url):
     processamento = pd.read_csv(url, sep='\t')
     processamento = normalizar_columas(processamento)
     processamento = processamento.rename(columns={'cultivar':'produto'})
-    processamento = processamento.drop(columns=['2022'])
+    processamento = processamento.drop(columns=['2022'])    
 
     # IMPORTAR OS GRUPOS
     importar_grupos(processamento)
@@ -272,6 +272,16 @@ def importacao_processamento(url):
 
     # IMPORTAR DADOS DE PRODUÇÃO
     lista_grupos, lista_produtos = preparar_dataset_grupo_produto(processamento)
+
+    # REMOVER VALORES NÃO NUMÉRICOS DA COLUNA VALOR
+    def converter_para_int(valor):
+        try:
+            return int(valor)
+        except:
+            return 0
+        
+    lista_grupos['valor'] = lista_grupos['valor'].apply(converter_para_int)
+    lista_produtos['valor'] = lista_produtos['valor'].apply(converter_para_int)
 
     # Salvando no banco de dados todos os processamentos que ainda não foram importados:
     total_importados = 0
@@ -295,6 +305,10 @@ def importacao_processamento(url):
     session.commit()  # salva as alterações no banco de dados
     print(f'Processamentos importados: {total_importados}')
 
+importacao_processamento('http://vitibrasil.cnpuv.embrapa.br/download/ProcessaViniferas.csv')
+importacao_processamento('http://vitibrasil.cnpuv.embrapa.br/download/ProcessaAmericanas.csv')
+importacao_processamento('http://vitibrasil.cnpuv.embrapa.br/download/ProcessaMesa.csv')
+importacao_processamento('http://vitibrasil.cnpuv.embrapa.br/download/ProcessaSemclass.csv')
 
 #==============================================================================
 # COMERCIALIZAÇÃO	
