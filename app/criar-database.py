@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import create_engine
 from pathlib import Path
-from models.entities import Base, User, Grupo, Produto, Producao, Comercializacao, Pais, Quantidade, Faturamento
+from models.entities import Base, User, Grupo, Produto, Producao, Comercializacao, Pais, Quantidade, Faturamento, Processamento
 
 import pandas as pd
 import hashlib
@@ -258,7 +258,42 @@ print(f'Dados de produção importados: {total_importados}')
 #==============================================================================
 # PROCESSAMENTO
 #==============================================================================
-# ....
+def importacao_processamento(url):
+    processamento = pd.read_csv(url, sep='\t')
+    processamento = normalizar_columas(processamento)
+    processamento = processamento.rename(columns={'cultivar':'produto'})
+    processamento = processamento.drop(columns=['2022'])
+
+    # IMPORTAR OS GRUPOS
+    importar_grupos(processamento)
+
+    # IMPORTAR OS PRODUTOS
+    importar_produtos(processamento)
+
+    # IMPORTAR DADOS DE PRODUÇÃO
+    lista_grupos, lista_produtos = preparar_dataset_grupo_produto(processamento)
+
+    # Salvando no banco de dados todos os processamentos que ainda não foram importados:
+    total_importados = 0
+    print('Importando dados de processamento dos grupos...')
+    for index, linha in lista_grupos.iterrows():
+        # Se o processamento ainda não foi importado, salva no banco de dados
+        if session.query(Processamento).where(Processamento.grupo_id == index, Processamento.ano == linha['ano']).first() is None:
+            processamento = Processamento(ano=linha['ano'], quantidade=linha['valor'], grupo_id=index)  # cria um objeto Processamento
+            session.add(processamento)  # adiciona o objeto ao banco de dados
+            total_importados += 1  # incrementa o contador de processamentos importados
+    session.commit()  # salva as alterações no banco de dados
+    print(f'Processamentos importados: {total_importados}')
+
+    total_importados = 0
+    for index, linha in lista_produtos.iterrows():
+        # Se o processamento ainda não foi importado, salva no banco de dados
+        if session.query(Processamento).where(Processamento.produto_id == index, Processamento.ano == linha['ano']).first() is None:
+            processamento = Processamento(ano=linha['ano'], quantidade=linha['valor'], produto_id=index)  # cria um objeto Processamento
+            session.add(processamento)  # adiciona o objeto ao banco de dados
+            total_importados += 1  # incrementa o contador de processamentos importados
+    session.commit()  # salva as alterações no banco de dados
+    print(f'Processamentos importados: {total_importados}')
 
 
 #==============================================================================
