@@ -104,7 +104,7 @@ Os dados utilizados pessa aplicação são:
 
 O processo de importação de dados ocorre conforme descrito pelo dragrama a seguir.
 
-<img src="https://raw.githubusercontent.com/JonhatanHaisi/fiap-1mlet/main/documentos/diagramas/Fluxo_Geral_de_Importação_de_Dados.png" alt="diagrama geral de importação de dados">
+<img src="https://raw.githubusercontent.com/JonhatanHaisi/fiap-1mlet/main/Projeto_1/documentos/diagramas/Fluxo_Geral_de_Importação_de_Dados.png" alt="diagrama geral de importação de dados">
 
 
 ## Fluxo geral das APIs de dados
@@ -113,7 +113,7 @@ APIs Rest são expostas para consulta dos dados do banco de dados obtidos por im
 
 As APIs foram implementadas conforme diagrama a seguir.
 
-<img src="https://raw.githubusercontent.com/JonhatanHaisi/fiap-1mlet/main/documentos/diagramas/Fluxo_Geral_das_APIs_de_Dados.png" alt="diagrama geral de APIs">
+<img src="https://raw.githubusercontent.com/JonhatanHaisi/fiap-1mlet/main/Projeto_1/documentos/diagramas/Fluxo_Geral_das_APIs_de_Dados.png" alt="diagrama geral de APIs">
 
 
 ## Processo de implantação
@@ -138,4 +138,4 @@ O deployment de modelos de machine learning será feito por upload de arquivos e
 
 A estrutura geral do processo de build e deployment será como definido no diagrama a seguir:
 
-<img src="https://raw.githubusercontent.com/JonhatanHaisi/fiap-1mlet/main/documentos/diagramas/Diagrama_de_implantação.png" alt="diagrama de implantação">
+<img src="https://raw.githubusercontent.com/JonhatanHaisi/fiap-1mlet/main/Projeto_1/documentos/diagramas/Diagrama_de_implantação.png" alt="diagrama de implantação">
