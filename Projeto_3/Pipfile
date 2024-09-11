@@ -10,6 +10,7 @@ matplotlib = "*"
 seaborn = "*"
 plotly = "*"
 streamlit = "*"
+streamlit-aggrid = "*"
 
 [dev-packages]
 

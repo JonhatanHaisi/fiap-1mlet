@@ -1,6 +1,9 @@
 import pandas as pd
 import plotly.express as px
 import streamlit as st
+import plotly.graph_objects as go
+
+from plotly import subplots
 
 @st.cache_resource
 def carrega_e_formata_dados_covid_global():
@@ -13,29 +16,99 @@ def carrega_e_formata_dados_covid_global():
     covid_global['New_cases'] = covid_global['New_cases'].fillna(0).astype(int)
     covid_global['New_deaths'] = covid_global['New_deaths'].fillna(0).astype(int)
 
+    covid_global = covid_global.rename(columns={
+        'Date_reported': 'Data Reportada',
+        'Country_code': 'Código do País',
+        'Country': 'País',
+        'WHO_region': 'Região OMS',
+        'New_cases': 'Novos Casos',
+        'Cumulative_cases': 'Casos Acumulados',
+        'New_deaths': 'Novas Mortes',
+        'Cumulative_deaths': 'Mortes Acumuladas',
+    })
+
     return covid_global
 
-def criar_grafico_evolucao(df:pd.DataFrame, coluna:str, titulo:str, cor:str='Country', width=10000, height=450):
+@st.cache_resource
+def carrega_e_formata_dados_vacinacao_covid_global():
+    arquivo = './data/vaccination-data.csv'
+    vacinacao = pd.read_csv(arquivo, sep=';', encoding='utf-8')
+    vacinacao['WHO_REGION'] = vacinacao['WHO_REGION'].fillna('?').astype('category')
+    vacinacao['FIRST_VACCINE_DATE'] = pd.to_datetime(vacinacao['FIRST_VACCINE_DATE'], dayfirst=True)
+    
+    vacinacao = vacinacao.drop(['ISO3', 'DATA_SOURCE', 'VACCINES_USED', 'DATE_UPDATED', 'NUMBER_VACCINES_TYPES_USED', vacinacao.columns[-1]], axis=1)
+
+    vacinacao = vacinacao.rename(columns={
+        'COUNTRY': 'País',
+        'WHO_REGION': 'Região OMS',
+        'FIRST_VACCINE_DATE': 'Data da Primeira Vacina',
+        'TOTAL_VACCINATIONS': 'Total de Vacinações',
+        'PERSONS_VACCINATED_1PLUS_DOSE': 'Pessoas Vacinadas 1+ Doses',
+        'TOTAL_VACCINATIONS_PER100': 'Total de Vacinações por 100 Mil',
+        'PERSONS_VACCINATED_1PLUS_DOSE_PER100': 'Pessoas Vacinadas 1+ Doses por 100 Mil',
+        'PERSONS_LAST_DOSE': 'Pessoas com Última Dose',
+        'PERSONS_LAST_DOSE_PER100': 'Pessoas com Última Dose por 100 Mil',
+        'PERSONS_BOOSTER_ADD_DOSE': 'Pessoas com Dose de Reforço',
+        'PERSONS_BOOSTER_ADD_DOSE_PER100': 'Pessoas com Dose de Reforço por 100 Mil',
+    })
+
+    vacinacao = vacinacao.dropna()
+
+    return vacinacao
+
+def criar_grafico_evolucao(df:pd.DataFrame, coluna:str, titulo:str, cor:str='País'):
     return px.line(
         df, 
-        x='Date_reported', 
+        x='Data Reportada', 
         y=coluna, 
         color=cor, 
         title=titulo,
-        width=width,
-        height=height,
     )
 
 
-def criar_grafico_geo(df:pd.DataFrame, coluna:str, titulo:str, width=1500, height=600):
-    covid_global_grouped = df.groupby('Country')[coluna].max().sort_values(ascending=False)
+def criar_grafico_geo(df:pd.DataFrame, coluna:str, titulo:str, width=1500, height=800):
+    covid_global_grouped = df.groupby('País')[coluna].max().sort_values(ascending=False)
     return px.scatter_geo(
         covid_global_grouped, 
         locations=covid_global_grouped.index, 
-        size=covid_global_grouped.values, 
+        size=coluna, 
         locationmode='country names', 
         title=titulo,
         width=width, 
         height=height,
     )
 
+def criar_grafico_acumulado(df:pd.DataFrame, titulo:str, col_acumulada:str, col_novos:str):
+    covid_death_cumulative = df.groupby('Data Reportada')[col_acumulada].sum().sort_values(ascending=False)
+    covid_new_death_cumulative = df.groupby('Data Reportada')[col_novos].sum().sort_values(ascending=False)
+
+    fig = subplots.make_subplots(specs=[[{"secondary_y": True}]])
+
+    fig.add_trace(go.Bar(x=covid_new_death_cumulative.index, y=covid_new_death_cumulative.values, name=col_novos), secondary_y=False)
+    fig.add_trace(go.Scatter(x=covid_death_cumulative.index, y=covid_death_cumulative.values, name=col_acumulada,  mode='markers', marker=dict(color='#c83f22', size=3)), secondary_y=True)
+
+    fig.update_layout(
+        title=titulo,
+        xaxis_title="Data Reportada",
+        yaxis_title=col_novos,
+        yaxis2_title=col_acumulada,
+    )
+
+    return fig
+
+def criar_grafico_bar(df:pd.DataFrame, titulo:str, group_by:str, coluna:str):
+    covid_global_grouped = df.groupby(group_by)[coluna].max().sort_values(ascending=False)    
+    return px.bar(covid_global_grouped, y=coluna, title=titulo)
+
+def criar_grafico_adesao_vacina(df:pd.DataFrame, titulo:str, by:str='Data da Primeira Vacina', coluna:str='País'):
+    adesao_vacina = df.groupby(by)[coluna].count().sort_values(ascending=False)
+    return px.bar(adesao_vacina, y=coluna, title=titulo)
+
+def criar_grafico_total_vacinacao(df:pd.DataFrame, titulo:str):
+    return px.bar(
+        df.sort_values('País'), 
+        x='País', 
+        y='Total de Vacinações', 
+        title=titulo,
+        height=800,
+    )
