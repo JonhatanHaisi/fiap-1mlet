@@ -7,7 +7,7 @@ import utils.covid_global_utils as cgu
 
 st.set_page_config(page_title="COVID 19 Dashboard", page_icon="🦠", layout="wide")
 
-covid_global_tab, vacinacao_tab = st.tabs(['Covid Global', 'Vacinação'])
+covid_global_tab, vacinacao_tab, previsoes = st.tabs(['Covid Global', 'Vacinação', 'Previsões'])
 
 with covid_global_tab:
     '# COVID-19 Global'
@@ -41,10 +41,21 @@ with vacinacao_tab:
     st.plotly_chart(cgu.criar_grafico_adesao_vacina(vacinacao_global, 'Novos Paises Vacinantes Por Dia'))
 
     '## Total de vacinações por país'
-    st.plotly_chart(cgu.criar_grafico_total_vacinacao(vacinacao_global.query('`Total de Vacinações` > 10000000'), 'Total de vacinações por país'))
+    st.plotly_chart(cgu.criar_grafico_total_vacinacao(vacinacao_global.query('`Total de Vacinações` > 10000000'), 'Total de vacinações por país (10mi ou mais)'))
+
+    '## Comparativo de vacinação por região OMS'
+    st.plotly_chart(cgu.criar_grafico_comparativo_1_dose_e_ultima_dose_e_dose_reforco(vacinacao_global, 'Comparativo de vacinação por região OMS'))
+    st.plotly_chart(cgu.criar_grafico_100mil_comparativo_1_dose_e_ultima_dose_e_dose_reforco(vacinacao_global, 'Comparativo de vacinação por região OMS (por 100 mil habitantes)'))
+
 
     '## Tabela de vacinação da COVID 19 no mundo'
     AgGrid(vacinacao_global)
+
+
+with previsoes:
+    '# Previsões'
+
+    'Em breve...'
 
 
      

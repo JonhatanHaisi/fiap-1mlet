@@ -5,8 +5,13 @@ import plotly.graph_objects as go
 
 from plotly import subplots
 
+
 @st.cache_resource
 def carrega_e_formata_dados_covid_global():
+    '''
+    Carrega e formata os dados de COVID-19 global
+    '''
+
     arquivo = './data/WHO-COVID-19-global-data.csv'
     covid_global = pd.read_csv(arquivo, sep=';', encoding='utf-8')
     covid_global['Date_reported'] = pd.to_datetime(covid_global['Date_reported'], dayfirst=True)
@@ -29,8 +34,13 @@ def carrega_e_formata_dados_covid_global():
 
     return covid_global
 
+
 @st.cache_resource
 def carrega_e_formata_dados_vacinacao_covid_global():
+    '''
+    Carrega e formata os dados de vacinação global
+    '''
+
     arquivo = './data/vaccination-data.csv'
     vacinacao = pd.read_csv(arquivo, sep=';', encoding='utf-8')
     vacinacao['WHO_REGION'] = vacinacao['WHO_REGION'].fillna('?').astype('category')
@@ -52,11 +62,21 @@ def carrega_e_formata_dados_vacinacao_covid_global():
         'PERSONS_BOOSTER_ADD_DOSE_PER100': 'Pessoas com Dose de Reforço por 100 Mil',
     })
 
+    vacinacao['Total de Vacinações por 100 Mil'] = vacinacao['Total de Vacinações por 100 Mil'] * 1000
+    vacinacao['Pessoas Vacinadas 1+ Doses por 100 Mil'] = vacinacao['Pessoas Vacinadas 1+ Doses por 100 Mil'] * 1000
+    vacinacao['Pessoas com Última Dose por 100 Mil'] = vacinacao['Pessoas com Última Dose por 100 Mil'] * 1000
+    vacinacao['Pessoas com Dose de Reforço por 100 Mil'] = vacinacao['Pessoas com Dose de Reforço por 100 Mil'] * 1000
+
     vacinacao = vacinacao.dropna()
 
     return vacinacao
 
+
 def criar_grafico_evolucao(df:pd.DataFrame, coluna:str, titulo:str, cor:str='País'):
+    '''
+    Cria um gráfico de linha com a evolução de uma coluna
+    '''
+
     return px.line(
         df, 
         x='Data Reportada', 
@@ -67,6 +87,10 @@ def criar_grafico_evolucao(df:pd.DataFrame, coluna:str, titulo:str, cor:str='Pa�
 
 
 def criar_grafico_geo(df:pd.DataFrame, coluna:str, titulo:str, width=1500, height=800):
+    '''
+    Cria um gráfico de mapa com a evolução de uma coluna
+    '''
+
     covid_global_grouped = df.groupby('País')[coluna].max().sort_values(ascending=False)
     return px.scatter_geo(
         covid_global_grouped, 
@@ -78,7 +102,12 @@ def criar_grafico_geo(df:pd.DataFrame, coluna:str, titulo:str, width=1500, heigh
         height=height,
     )
 
+
 def criar_grafico_acumulado(df:pd.DataFrame, titulo:str, col_acumulada:str, col_novos:str):
+    '''
+    Cria um gráfico de barras com a evolução de uma coluna acumulada e uma coluna de novos casos
+    '''
+
     covid_death_cumulative = df.groupby('Data Reportada')[col_acumulada].sum().sort_values(ascending=False)
     covid_new_death_cumulative = df.groupby('Data Reportada')[col_novos].sum().sort_values(ascending=False)
 
@@ -96,15 +125,48 @@ def criar_grafico_acumulado(df:pd.DataFrame, titulo:str, col_acumulada:str, col_
 
     return fig
 
+
 def criar_grafico_bar(df:pd.DataFrame, titulo:str, group_by:str, coluna:str):
+    '''
+    Cria um gráfico de barras com a evolução de uma coluna agrupada
+    '''
     covid_global_grouped = df.groupby(group_by)[coluna].max().sort_values(ascending=False)    
     return px.bar(covid_global_grouped, y=coluna, title=titulo)
 
-def criar_grafico_adesao_vacina(df:pd.DataFrame, titulo:str, by:str='Data da Primeira Vacina', coluna:str='País'):
-    adesao_vacina = df.groupby(by)[coluna].count().sort_values(ascending=False)
-    return px.bar(adesao_vacina, y=coluna, title=titulo)
+
+def criar_grafico_adesao_vacina(df: pd.DataFrame, titulo: str):
+    '''
+    Cria uma figura com dois gráficos: um gráfico de barras com a adesão à vacinação
+    e um gráfico de linha com os valores acumulados.
+    '''
+
+    fig = subplots.make_subplots(specs=[[{"secondary_y": True}]])
+
+    adesao_vacina = df.groupby('Data da Primeira Vacina')['País'].count().sort_values(ascending=False)
+    fig.add_trace(
+        go.Bar(x=adesao_vacina.index, y=adesao_vacina.values, name='Adesão à Vacinação'),
+        secondary_y=False
+    )
+
+    adesao_acumulada = df.sort_values('Data da Primeira Vacina') \
+        .set_index('Data da Primeira Vacina') \
+        .groupby('Data da Primeira Vacina')['País'].count()+1
+    adesao_acumulada = adesao_acumulada.groupby('Data da Primeira Vacina') .count().cumsum()
+
+    fig.add_trace(
+        go.Scatter(x=adesao_acumulada.index, y=adesao_acumulada.values, mode='lines', name='Valores Acumulados'),
+        secondary_y=True
+    )
+
+    fig.update_layout(title_text=titulo, showlegend=False)
+    
+    return fig
 
 def criar_grafico_total_vacinacao(df:pd.DataFrame, titulo:str):
+    '''
+    Cria um gráfico de barras com o total de vacinações por país
+    '''
+
     return px.bar(
         df.sort_values('País'), 
         x='País', 
@@ -112,3 +174,74 @@ def criar_grafico_total_vacinacao(df:pd.DataFrame, titulo:str):
         title=titulo,
         height=800,
     )
+
+
+
+def criar_grafico_comparativo_1_dose_e_ultima_dose_e_dose_reforco(df:pd.DataFrame, titulo:str):
+    fig = go.Figure()
+
+    vacinas_por_regiao = df.groupby('Região OMS')[['Pessoas Vacinadas 1+ Doses', 'Pessoas com Última Dose', 'Pessoas com Dose de Reforço']].sum()
+    vacinas_por_regiao = vacinas_por_regiao.query('`Pessoas Vacinadas 1+ Doses` > 0')
+
+    fig.add_trace(go.Bar(
+        x=vacinas_por_regiao.index,
+        y=vacinas_por_regiao['Pessoas Vacinadas 1+ Doses'],
+        name='Pessoas Vacinadas 1+ Doses',
+        marker_color='blue'
+    ))
+
+    fig.add_trace(go.Bar(
+        x=vacinas_por_regiao.index,
+        y=vacinas_por_regiao['Pessoas com Última Dose'],
+        name='Pessoas com Última Dose',
+        marker_color='green'
+    ))
+
+    fig.add_trace(go.Bar(
+        x=vacinas_por_regiao.index,
+        y=vacinas_por_regiao['Pessoas com Dose de Reforço'],
+        name='Pessoas com Dose de Reforço',
+        marker_color='purple'
+    ))
+
+    fig.update_layout(
+        title=titulo,
+        barmode='group'
+    )
+
+    return fig
+
+
+def criar_grafico_100mil_comparativo_1_dose_e_ultima_dose_e_dose_reforco(df:pd.DataFrame, titulo:str):
+    fig = go.Figure()
+
+    vacinas_por_regiao = df.groupby('Região OMS')[['Pessoas Vacinadas 1+ Doses por 100 Mil', 'Pessoas com Última Dose por 100 Mil', 'Pessoas com Dose de Reforço por 100 Mil']].sum()
+    vacinas_por_regiao = vacinas_por_regiao.query('`Pessoas Vacinadas 1+ Doses por 100 Mil` > 0')
+
+    fig.add_trace(go.Bar(
+        x=vacinas_por_regiao.index,
+        y=vacinas_por_regiao['Pessoas Vacinadas 1+ Doses por 100 Mil'],
+        name='Pessoas Vacinadas 1+ Doses por 100 Mil',
+        marker_color='blue'
+    ))
+
+    fig.add_trace(go.Bar(
+        x=vacinas_por_regiao.index,
+        y=vacinas_por_regiao['Pessoas com Última Dose por 100 Mil'],
+        name='Pessoas com Última Dose por 100 Mil',
+        marker_color='green'
+    ))
+
+    fig.add_trace(go.Bar(
+        x=vacinas_por_regiao.index,
+        y=vacinas_por_regiao['Pessoas com Dose de Reforço por 100 Mil'],
+        name='Pessoas com Dose de Reforço por 100 Mil',
+        marker_color='purple'
+    ))
+
+    fig.update_layout(
+        title=titulo,
+        barmode='group'
+    )
+
+    return fig
