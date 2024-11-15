@@ -18,8 +18,14 @@ pandas = "*"
 matplotlib = "*"
 seaborn = "*"
 mplfinance = "*"
+scikit-learn = "*"
+fastapi = "==0.110.1"
+uvicorn = {extras = ["standard"], version = "==0.29.0"}
 
 [dev-packages]
 
 [requires]
 python_version = "3.12"
+
+[scripts]
+app = "uvicorn --app-dir app main:app --reload"
