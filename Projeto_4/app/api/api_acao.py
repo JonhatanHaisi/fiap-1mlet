@@ -8,8 +8,8 @@ from model.acao import MODEL, obter_dados_acao_preparados
 
 @app.get("/acao/previsao/{ticker}")
 async def previsao_acao(ticker:str):
-    data = obter_dados_acao_preparados(ticker)
-    prediction, _  = MODEL(data)
-    return {"ticker": ticker, "previsao": prediction.tolist()[0][0]}
+    data, last_date = obter_dados_acao_preparados(ticker)
+    prediction  = MODEL(data)
+    return {"ticker": ticker, "previsao": prediction.tolist()[0][0], "last_close_date": last_date }
 
 

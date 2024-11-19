@@ -19,23 +19,22 @@ class AcaoModel(nn.Module):
         out, _ = self.rnn(x, (h0, c0))
         out = self.fc(out[:, -1, :])
 
-        inversed = SCALER.inverse_transform(out.detach().cpu().squeeze().numpy().reshape(-1, 1))
-        return inversed, out
+        return SCALER.inverse_transform(out.detach().cpu().squeeze().numpy().reshape(-1, 1))
     
     @staticmethod
-    def load():
-        net = AcaoModel(1, 5, 1, 1).to(DEVICE)
-        torch.load('app/models/stock_rnn.pth')
+    def load(device:torch.device):
+        net = AcaoModel(1, 5, 1, 1).to(device)
+        net.load_state_dict(torch.load('app/models/stock_rnn.pth', map_location=device))
         return net
 
 def obter_dados_acao_preparados(ticker:str):
     stock = yf.Ticker(ticker)
-    data = stock.history(period='1mo')
-    data = data['Close'].values[-21:].reshape(-1, 1)
-    data = SCALER.transform(data)
-    return torch.tensor(data).float().unsqueeze(0)
+    data = stock.history(period='1mo')[-22:-1]
+    close = data['Close'].values.reshape(-1, 1)
+    close = SCALER.transform(close)
+    return torch.tensor(close).float().unsqueeze(0), data.index[-1]
 
 
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 SCALER = joblib.load('app/models/stock_rnn_scaler.pkl')
-MODEL = AcaoModel.load()
+MODEL = AcaoModel.load(DEVICE)

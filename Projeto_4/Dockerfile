@@ -3,25 +3,27 @@ FROM amazonlinux:2
 
 # Atualizar os pacotes e instalar as dependências necessárias
 RUN yum update -y && \
-    yum install -y gcc openssl bzip2 libffi make wget tar gzip
-
-# Baixar o Python 3.12
-RUN cd /usr/src && \
+    yum -y groupinstall "Development Tools" && \
+    yum -y install gcc devel libffi-devel openssl11-1.1.1g openssl11-libs-1.1.1g openssl11-devel-1.1.1g sqlite-devel && \
+    yum -y install wget && \
     wget https://www.python.org/ftp/python/3.12.0/Python-3.12.0.tgz && \
-    tar xzf Python-3.12.0.tgz && \
-    cd /usr/src/Python-3.12.0 && \
+    tar zxvf Python-3.12.0.tgz && \
+    cd Python-3.12.0/ && \
     ./configure --enable-optimizations && \
-    make altinstall && \
-    ln -s /usr/local/bin/python3.12 /usr/bin/python3 && \
-    ln -s /usr/local/bin/pip3.12 /usr/bin/pip3
+    make && \
+    make altinstall
+
 
 # Instalar o pipenv
-RUN pip3 install pipenv
+RUN pip3.12 install pipenv
 
 EXPOSE 8000
 WORKDIR /app
 COPY . /app
 
 # Instalar as dependências do projeto
-RUN pipenv install --deploy --ignore-pipfile
+RUN pipenv install --deploy --ignore-pipfile && \
+    pipenv install torch --index pypi
+
+CMD ["pipenv", "run", "app" ]
 

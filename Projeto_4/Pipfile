@@ -11,7 +11,6 @@ name = "pytorch"
 [packages]
 jupyterlab = "*"
 yfinance = "*"
-torch = {version = "*", index = "pytorch"}
 tensorboard = "*"
 tensorboardx = "*"
 pandas = "*"
@@ -20,12 +19,14 @@ seaborn = "*"
 mplfinance = "*"
 scikit-learn = "*"
 fastapi = "==0.110.1"
-uvicorn = {extras = ["standard"], version = "==0.29.0"}
+uvicorn = {extras = ["standard"] }
 
 [dev-packages]
+torch = { index = "pytorch"}
 
 [requires]
 python_version = "3.12"
 
 [scripts]
-app = "uvicorn --app-dir app main:app --reload"
+app-dev = "uvicorn --app-dir app main:app --reload"
+app = "uvicorn --app-dir app main:app --host 0.0.0.0"
