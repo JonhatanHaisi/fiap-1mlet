@@ -5,14 +5,23 @@ name = "pypi"
 
 [packages]
 sqlalchemy = "*"
+fastapi = "*"
+uvicorn = {extras = ["standard"] }
+scikit-learn = "*"
+pandas = "*"
+nltk = "*"
 
 [dev-packages]
 jupyterlab = "*"
-pandas = "*"
 matplotlib = "*"
 seaborn = "*"
-scikit-learn = "*"
-nltk = "*"
+pytest = "*"
+pytest-asyncio = "*"
+pytest-mock = "*"
 
 [requires]
 python_version = "3.11"
+
+[scripts]
+app = "uvicorn --app-dir app main:app --reload"
+tests = "pytest -p no:cacheprovider"
