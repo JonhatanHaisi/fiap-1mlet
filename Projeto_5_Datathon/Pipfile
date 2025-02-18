@@ -10,6 +10,7 @@ uvicorn = {extras = ["standard"] }
 scikit-learn = "*"
 pandas = "*"
 nltk = "*"
+fastapi-cache2 = {extras = ["redis"], version = "*"}
 
 [dev-packages]
 jupyterlab = "*"

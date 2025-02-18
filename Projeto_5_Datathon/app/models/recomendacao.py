@@ -2,6 +2,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.pipeline import Pipeline
 from sqlalchemy.orm import Session
+from fastapi_cache.decorator import cache
 
 import pandas as pd
 import numpy as np
@@ -15,21 +16,22 @@ from models import entities
 TEXT_VECTORIZER: TfidfVectorizer = pickle.load(open("models/vectorizer_body.pkl", "rb"))
 ACTIVITY_TRANSFORMER: Pipeline = pickle.load(open("models/transformer.pkl", "rb"))
 
-def obter_recomendacao_usuario(usuario_id: str, session: Session):
+async def obter_recomendacao_usuario(usuario_id: str, session: Session):
     atividades = session.query(entities.Atividade).filter_by(usuario=usuario_id).all()
     if len(atividades) == 0:
-        return obter_recomendacoes_cold_start()
-    return obter_recomendacoes_personalizadas(usuario_id, session)
+        return await obter_recomendacoes_cold_start()
+    return await obter_recomendacoes_personalizadas(usuario_id, session)
 
 
-def obter_recomendacoes_cold_start():
+@cache()
+async def obter_recomendacoes_cold_start():
     df = pd.read_csv("models/data/cold_start.csv")
     return [ 
         models.Recomendacao(id=row['page'], titulo=row['title'], descricao=row['caption'])
         for _, row in df.iterrows()
      ]
 
-def obter_recomendacoes_personalizadas(usuario_id: str, session: Session):
+async def obter_recomendacoes_personalizadas(usuario_id: str, session: Session):
     materia_mais_recente = session.query(entities.Materia).order_by(entities.Materia.publicado.desc()).first()
     data_limite = materia_mais_recente.publicado - datetime.timedelta(days=14)
 
