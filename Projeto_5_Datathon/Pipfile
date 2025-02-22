@@ -11,6 +11,7 @@ scikit-learn = "*"
 pandas = "*"
 nltk = "*"
 fastapi-cache2 = {extras = ["redis"], version = "*"}
+mysqlclient = "*"
 
 [dev-packages]
 jupyterlab = "*"

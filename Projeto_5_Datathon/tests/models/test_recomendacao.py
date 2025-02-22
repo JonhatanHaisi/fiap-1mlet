@@ -15,7 +15,7 @@ def mock_session(mocker: MockerFixture):
 
 @pytest.mark.asyncio
 async def test_obter_recomendacao_usuario_cold_start(mock_session, mocker: MockerFixture):
-    mock_session.query.return_value.filter_by.return_value.all.return_value = []
+    mock_session.query.return_value.filter_by.return_value.first.return_value = None
     mocker.patch("models.recomendacao.obter_recomendacoes_cold_start", return_value=["cold_start_recommendation"])
 
     result = await recomendacao.obter_recomendacao_usuario("usuario_id", mock_session)
@@ -23,15 +23,13 @@ async def test_obter_recomendacao_usuario_cold_start(mock_session, mocker: Mocke
     assert result == ["cold_start_recommendation"]
     mock_session.query.assert_called_once_with(entities.Atividade)
     mock_session.query.return_value.filter_by.assert_called_once_with(usuario="usuario_id")
-    mock_session.query.return_value.filter_by.return_value.all.assert_called_once()
+    mock_session.query.return_value.filter_by.return_value.first.assert_called_once()
 
 
 @pytest.mark.asyncio
 async def test_obter_recomendacao_usuario_personalizada(mock_session, mocker: MockerFixture):
-    mock_atividades = [
-        entities.Atividade(id=1, usuario="usuario_id", materia_id="materia_id", tempo_leitura=1200, porcentagem_scroll=70)
-    ]
-    mock_session.query.return_value.filter_by.return_value.all.return_value = mock_atividades
+    mock_atividade = entities.Atividade(id=1, usuario="usuario_id", materia_id="materia_id", tempo_leitura=1200, porcentagem_scroll=70)
+    mock_session.query.return_value.filter_by.return_value.first.return_value = mock_atividade
     mocker.patch("models.recomendacao.obter_recomendacoes_personalizadas", return_value=["personalized_recommendation"])
 
     result = await recomendacao.obter_recomendacao_usuario("usuario_id", mock_session)
@@ -39,7 +37,7 @@ async def test_obter_recomendacao_usuario_personalizada(mock_session, mocker: Mo
     assert result == ["personalized_recommendation"]
     mock_session.query.assert_called_once_with(entities.Atividade)
     mock_session.query.return_value.filter_by.assert_called_once_with(usuario="usuario_id")
-    mock_session.query.return_value.filter_by.return_value.all.assert_called_once()
+    mock_session.query.return_value.filter_by.return_value.first.assert_called_once()
 
 
 @pytest.mark.asyncio
@@ -63,11 +61,15 @@ async def test_obter_recomendacoes_cold_start(mocker: MockerFixture):
 
 @pytest.mark.asyncio
 async def test_obter_recomendacoes_personalizadas(mock_session, mocker: MockerFixture):
-    mock_materia = entities.Materia(id="materia_id", titulo="Titulo", descricao="Descricao", conteudo="Conteudo", publicado=datetime.datetime.now())
-    mock_session.query.return_value.order_by.return_value.first.return_value = mock_materia
-    mock_session.query.return_value.filter.return_value.all.return_value = [mock_materia]
-    mock_session.query.return_value.filter_by.return_value.all.return_value = [
-        entities.Atividade(id=1, usuario="usuario_id", materia_id="outro_id", tempo_leitura=1200, porcentagem_scroll=70, materia=mock_materia)
+    mock_materia = entities.Materia(id="materia_id", titulo="Titulo", descricao="Descricao", conteudo="Conteudo", publicado=datetime.datetime.now().timestamp())
+    mock_atividade = entities.Atividade(id=1, usuario="usuario_id", materia_id="materia_id", tempo_leitura=1200, porcentagem_scroll=70, materia=mock_materia)
+
+    mock_session.query.return_value.filter_by.return_value.first.return_value = mock_atividade
+    mock_session.query.return_value.filter_by.return_value.all.return_value = [ mock_atividade ]
+
+    mock_session.query.return_value.order_by.return_value.limit.return_value.all.return_value = [
+        entities.Materia(id="materia_1", titulo="Titulo1", descricao="Descricao1", conteudo="Conteudo", publicado=datetime.datetime.now().timestamp()),
+        entities.Materia(id="materia_2", titulo="Titulo", descricao="Descricao", conteudo="Conteudo", publicado=datetime.datetime.now().timestamp()+5)
     ]
 
     mocker.patch("models.recomendacao.TEXT_VECTORIZER.transform", return_value=[[1]])
@@ -76,7 +78,7 @@ async def test_obter_recomendacoes_personalizadas(mock_session, mocker: MockerFi
 
     result = await recomendacao.obter_recomendacoes_personalizadas("usuario_id", mock_session)
 
-    assert len(result) == 1
-    assert result[0].id == "materia_id"
-    assert result[0].titulo == "Titulo"
-    assert result[0].descricao == "Descricao"
+    assert len(result) == 2
+    assert result[0].id == "materia_1"
+    assert result[0].titulo == "Titulo1"
+    assert result[0].descricao == "Descricao1"

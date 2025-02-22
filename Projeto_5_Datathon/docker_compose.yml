@@ -8,9 +8,15 @@ services:
     ports:
       - "80:80"
     depends_on:
-      - redis
+      - mysql
 
-  redis:
-    image: "redis:alpine"
+  mysql:
+    image: mysql:9.2
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: recomendacao
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
     ports:
-      - "6379:6379"
+      - "3306:3306"
+

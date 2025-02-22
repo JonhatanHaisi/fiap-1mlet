@@ -3,7 +3,7 @@ from sqlalchemy import create_engine
 
 
 # Cria uma sessão para interagir com o banco de dados
-_engine = create_engine('sqlite:///database.db', echo=False)
+_engine = create_engine('mysql://root:root@localhost/recomendacao', echo=False)
 
 
 # Função que cria uma sessão para interagir com o banco de dados
