@@ -46,7 +46,7 @@ async def obter_recomendacoes_personalizadas(usuario_id: str, session: Session):
     
     features = [ (atividade.tempo_leitura, atividade.porcentagem_scroll) for atividade in atividades]
     pesos_atividade = ACTIVITY_TRANSFORMER.transform(features)
-    pesos_atividade = np.mean(pesos_atividade, axis=1)
+    pesos_atividade = np.mean(pesos_atividade, axis=1).reshape(-1, 1)
 
     similatidades = similatidades + pesos_data_publicacao + pesos_atividade
 
